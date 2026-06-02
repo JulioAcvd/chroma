@@ -8,8 +8,10 @@
   let size = $state(380);
   let dragging = $state<number | null>(null);
 
-  // Cache the rendered disc so we only repaint pixels when size/lightness change.
-  let discCache: { l: number; px: number; data: ImageData } | null = null;
+  // The disc is built once per size (heavy per-pixel work) at a reference
+  // lightness; the actual lightness is applied as a cheap overlay each frame.
+  let discCache: { px: number; canvas: HTMLCanvasElement } | null = null;
+  const DISC_L = 50; // reference lightness the disc is rendered at
 
   const RING = 14; // marker radius in px
   const dpr = () => (typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1);
@@ -24,7 +26,7 @@
     return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
   }
 
-  function buildDisc(px: number, lightness: number): ImageData {
+  function buildDisc(px: number): HTMLCanvasElement {
     const off = document.createElement('canvas');
     off.width = px;
     off.height = px;
@@ -45,7 +47,7 @@
         let angle = Math.atan2(dy, dx) * (180 / Math.PI); // -180..180, 0 = +x
         const hue = (angle + 360) % 360;
         const sat = clamp((dist / r) * 100, 0, 100);
-        const [rr, gg, bb] = hslToRgb(hue, sat, lightness);
+        const [rr, gg, bb] = hslToRgb(hue, sat, DISC_L);
         data[idx] = rr;
         data[idx + 1] = gg;
         data[idx + 2] = bb;
@@ -53,7 +55,8 @@
         data[idx + 3] = dist > r - 1.5 ? Math.round(255 * (r - dist) / 1.5) : 255;
       }
     }
-    return img;
+    octx.putImageData(img, 0, 0);
+    return off;
   }
 
   function markerPos(c: HslColor, r: number): { x: number; y: number } {
@@ -69,13 +72,29 @@
     canvas.width = px;
     canvas.height = px;
 
-    const l = store.base.l;
-    if (!discCache || discCache.l !== l || discCache.px !== px) {
-      discCache = { l, px, data: buildDisc(px, l) };
-    }
-    ctx.putImageData(discCache.data, 0, 0);
-
     const r = px / 2;
+
+    // Build the disc only when the size changes (expensive); cache otherwise.
+    if (!discCache || discCache.px !== px) {
+      discCache = { px, canvas: buildDisc(px) };
+    }
+    ctx.clearRect(0, 0, px, px);
+    ctx.drawImage(discCache.canvas, 0, 0);
+
+    // Apply the current lightness as a cheap white/black overlay (clipped to disc).
+    const l = store.base.l;
+    if (l !== DISC_L) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(r, r, r, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.fillStyle =
+        l > DISC_L
+          ? `rgba(255,255,255,${(l - DISC_L) / (100 - DISC_L)})`
+          : `rgba(0,0,0,${(DISC_L - l) / DISC_L})`;
+      ctx.fillRect(0, 0, px, px);
+      ctx.restore();
+    }
     store.colors.forEach((c, i) => {
       const { x, y } = markerPos(c, r);
       const isBase = i === store.baseIndex;
@@ -130,10 +149,25 @@
     return best ? best.i : null;
   }
 
+  function withinDisc(e: PointerEvent): boolean {
+    const rect = canvas.getBoundingClientRect();
+    const r = rect.width / 2;
+    const dx = e.clientX - rect.left - r;
+    const dy = e.clientY - rect.top - r;
+    return Math.hypot(dx, dy) <= r;
+  }
+
   function onPointerDown(e: PointerEvent) {
     const hit = hitTest(e);
-    if (hit === null) return;
-    dragging = hit;
+    if (hit !== null) {
+      // grabbed an existing marker (base moves all, others fine-tune)
+      dragging = hit;
+    } else {
+      // clicked empty space inside the disc → jump the base here and drag it
+      if (!withinDisc(e)) return;
+      dragging = store.baseIndex;
+      store.updateColor(store.baseIndex, colorFromEvent(e, store.base.l));
+    }
     canvas.setPointerCapture(e.pointerId);
     e.preventDefault();
   }
