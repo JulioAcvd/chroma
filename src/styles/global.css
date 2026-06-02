@@ -54,6 +54,9 @@
 
   body {
     min-height: 100dvh;
+    /* keep content clear of notches / status bar when installed as an app */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+      env(safe-area-inset-bottom) env(safe-area-inset-left);
     background-color: var(--color-bg);
     color: var(--color-text);
     font-family: var(--font-sans);
