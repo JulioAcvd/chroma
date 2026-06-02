@@ -67,7 +67,10 @@
 
   function draw() {
     if (!canvas) return;
-    const px = Math.round(size * dpr());
+    // Display size comes from CSS (always fits the container); the bitmap
+    // resolution is derived from the measured width so it never overflows.
+    const cssW = canvas.clientWidth || size;
+    const px = Math.max(1, Math.round(cssW * dpr()));
     const ctx = canvas.getContext('2d')!;
     canvas.width = px;
     canvas.height = px;
@@ -196,8 +199,8 @@
   $effect(() => {
     if (!wrapper) return;
     const ro = new ResizeObserver((entries) => {
-      const w = entries[0].contentRect.width;
-      size = Math.max(220, Math.min(440, Math.floor(w)));
+      // Track the measured width so draw() repaints at the right resolution.
+      size = Math.floor(entries[0].contentRect.width);
     });
     ro.observe(wrapper);
     return () => ro.disconnect();
@@ -207,7 +210,6 @@
 <div bind:this={wrapper} class="wheel-wrap no-select">
   <canvas
     bind:this={canvas}
-    style="width:{size}px;height:{size}px"
     class="wheel"
     class:grabbing={dragging !== null}
     onpointerdown={onPointerDown}
@@ -227,6 +229,11 @@
     margin-inline: auto;
   }
   .wheel {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    aspect-ratio: 1 / 1;
     border-radius: 9999px;
     touch-action: none;
     cursor: grab;
