@@ -2,7 +2,6 @@
   import autoAnimate from '@formkit/auto-animate';
   import { store } from '../lib/store.svelte';
   import { HARMONIES, HARMONY_MAP } from '../lib/harmonies';
-  import { hslToHex } from '../lib/color';
   import {
     toCssVars,
     toTailwind,
@@ -105,7 +104,7 @@
       </div>
     </div>
     <div class="swatches" use:autoAnimate>
-      {#each store.colors as c, i (i + '-' + hslToHex(c))}
+      {#each store.colors as c, i (i)}
         <Swatch color={c} format={store.format} isBase={i === store.baseIndex} />
       {/each}
     </div>
