@@ -1,0 +1,81 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/geist';
+
+/* Disable daisyUI's built-in themes so only "chroma" applies (no bluish dark theme) */
+@plugin "daisyui" {
+  themes: false;
+}
+
+/* daisyUI theme that matches Chroma's tokens, so components stay on-brand */
+@plugin "daisyui/theme" {
+  name: 'chroma';
+  default: true;
+  color-scheme: dark;
+
+  --color-base-100: #0a0a0a;
+  --color-base-200: #141414;
+  --color-base-300: #1c1c1c;
+  --color-base-content: #ededed;
+
+  --color-primary: #6366f1;
+  --color-primary-content: #ffffff;
+
+  /* light neutral → light tooltip with dark text, matching the toast */
+  --color-neutral: #ededed;
+  --color-neutral-content: #0a0a0a;
+
+  --radius-selector: 0.6rem;
+  --radius-field: 0.6rem;
+  --radius-box: 0.75rem;
+}
+
+/* Chroma design tokens — dark only */
+@theme {
+  --font-sans: 'Geist Variable', 'Geist Fallback', ui-sans-serif, system-ui, sans-serif;
+
+  --color-bg: #0a0a0a;
+  --color-surface: #141414;
+  --color-surface-2: #1c1c1c;
+  --color-border: #262626;
+  --color-border-strong: #333333;
+  --color-text: #ededed;
+  --color-text-muted: #a1a1a1;
+  --color-text-faint: #6b6b6b;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    background-color: var(--color-bg);
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-style: normal;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Geist at weight 600 everywhere, per design spec */
+  button,
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+    font-weight: 600;
+  }
+}
+
+@layer utilities {
+  .no-select {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}
