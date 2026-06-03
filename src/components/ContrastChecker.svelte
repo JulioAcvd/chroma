@@ -102,6 +102,11 @@
     gap: 0.8rem;
     align-items: stretch;
   }
+  @media (max-width: 480px) {
+    .result {
+      flex-direction: column;
+    }
+  }
   .preview {
     flex: 1;
     border-radius: 12px;
@@ -145,7 +150,8 @@
   .badge {
     font-size: 0.68rem;
     text-align: center;
-    padding: 0.3rem 0.2rem;
+    white-space: nowrap;
+    padding: 0.35rem 0.4rem;
     border-radius: 7px;
     border: 1px solid var(--color-border);
     background: var(--color-surface);

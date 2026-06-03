@@ -51,7 +51,7 @@
     <div class="harmony-grid">
       {#each HARMONIES as h}
         <button
-          class="pill tooltip tooltip-bottom"
+          class="pill tooltip tooltip-top"
           class:active={store.harmony === h.id}
           onclick={() => store.setHarmony(h.id)}
           data-tip={h.label}
@@ -113,7 +113,7 @@
   <!-- Actions -->
   <section class="actions">
     <button
-      class="btn btn-random tooltip tooltip-bottom"
+      class="btn btn-random tooltip tooltip-top"
       onclick={() => store.randomize()}
       data-tip="Aleatorio"
       aria-label="Aleatorio"
